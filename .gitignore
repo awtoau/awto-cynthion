@@ -18,11 +18,8 @@ firmware/moondancer-pac/build/
 # Environments
 **/.python-version
 ci_env/
-ci_env*/
+ci_env311/
 venv/
-
-# Local workspace scratch
-tmp/
 
 # Operating system spew
 .DS_Store
