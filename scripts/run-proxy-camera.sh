@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Load facedancer gateware onto Cynthion then run the UTi261M camera proxy.
-# Reproduces the isochronous IN crash documented in awtoau/cynthion#6.
 #
 # The Cynthion must be connected (any mode — Apollo 1d50:60e6 or
 # Analyzer/Facedancer 1d50:615b). The script loads the facedancer gateware
-# unconditionally so the moondancer API is always available to the proxy.
+# unconditionally, which also recovers from a bad proxy state (awtoau/cynthion#7):
+# cynthion run facedancer uses ApolloDebugger(force_offline=True) which requests
+# a USB handoff even when the moondancer interface is unresponsive.
 #
 # Run from repo root: ./scripts/run-proxy-camera.sh
 set -euo pipefail
