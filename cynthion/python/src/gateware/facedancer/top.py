@@ -21,7 +21,7 @@ from luna_soc.gateware.core.spiflash import ECP5ConfigurationFlashInterface, SPI
 from luna_soc.gateware.cpu           import InterruptController, VexRiscv
 from luna_soc.gateware.provider      import cynthion as provider
 
-from . import advertiser, info
+from . import advertiser, ep_iso_in, info
 
 
 # - component: Soc ------------------------------------------------------------
@@ -80,6 +80,8 @@ class Soc(Component):
         self.advertiser_base      = 0x00001400
         self.info_base            = 0x00001500
         self.user0_base           = 0x00001600
+        self.usb0_ep_iso_in_base  = 0x00001700
+        self.usb0_ep_iso_in_irq   = 14
 
         # cpu
         self.cpu = VexRiscv(
@@ -206,6 +208,13 @@ class Soc(Component):
         self.interrupt_controller.add(self.usb2_ep_in,      name="usb2_ep_in",      number=self.usb2_ep_in_irq)
         self.interrupt_controller.add(self.usb2_ep_out,     name="usb2_ep_out",     number=self.usb2_ep_out_irq)
 
+        # usb0 isochronous IN endpoint (target_phy, ep 1, UTi261M UVC video)
+        # endpoint_number=1 matches UVC 0x81; max_packet_size=128 matches alt setting 1.
+        # NOTE: requires bitstream rebuild to take effect.
+        self.usb0_ep_iso_in = ep_iso_in.Peripheral(endpoint_number=1, max_packet_size=128)
+        self.csr_decoder.add(self.usb0_ep_iso_in.bus, addr=self.usb0_ep_iso_in_base, name="usb0_ep_iso_in")
+        self.interrupt_controller.add(self.usb0_ep_iso_in, name="usb0_ep_iso_in", number=self.usb0_ep_iso_in_irq)
+
         # apollo advertiser
         self.advertiser_provider = provider.ApolloAdvertiserProvider("int")
         self.advertiser = advertiser.Peripheral(pad=self.advertiser_provider.pins, clk_freq_hz=clock_frequency_hz)
@@ -288,8 +297,9 @@ class Soc(Component):
         usb0_device.add_endpoint(self.usb0_ep_control)
         usb0_device.add_endpoint(self.usb0_ep_in)
         usb0_device.add_endpoint(self.usb0_ep_out)
+        usb0_device.add_endpoint(self.usb0_ep_iso_in)
         m.d.comb += self.usb0.attach(usb0_device)
-        m.submodules += [ulpi0_provider, self.usb0, usb0_device]
+        m.submodules += [ulpi0_provider, self.usb0, usb0_device, self.usb0_ep_iso_in]
 
         # usb1 - aux_phy
         ulpi1_provider = provider.ULPIProvider(["aux_phy", "host_phy"])

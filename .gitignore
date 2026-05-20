@@ -39,7 +39,8 @@ Thumbs.db
 tags
 
 # files involved in generating a release
-cynthion/python/assets/moondancer.bin
+# awto: moondancer.bin is our patched build, tracked in source
+!cynthion/python/assets/moondancer.bin
 cynthion/python/assets/*.bit
 cynthion/python/assets/**/*.bit
 cynthion/python/VERSION

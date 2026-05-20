@@ -1,0 +1,3 @@
+[submodule "vendor/facedancer"]
+	path = vendor/facedancer
+	url = https://github.com/awtoau/facedancer

@@ -52,12 +52,34 @@ impl Packet {
 use heapless::spsc::Queue;
 use heapless::Vec;
 
+/// USB transfer types, matching the bmAttributes[1:0] field in endpoint descriptors.
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum TransferType {
+    Control     = 0,
+    Isochronous = 1,
+    Bulk        = 2,
+    Interrupt   = 3,
+}
+
+impl TransferType {
+    fn from_u8(v: u8) -> Self {
+        match v & 0x03 {
+            0 => Self::Control,
+            1 => Self::Isochronous,
+            2 => Self::Bulk,
+            _ => Self::Interrupt,
+        }
+    }
+}
+
 /// Moondancer
 pub struct Moondancer {
     usb0: hal::Usb0,
     quirk_flags: u16,
     ep_in_max_packet_size: [u16; smolusb::EP_MAX_ENDPOINTS],
     ep_out_max_packet_size: [u16; smolusb::EP_MAX_ENDPOINTS],
+    ep_transfer_type: [TransferType; smolusb::EP_MAX_ENDPOINTS],
     irq_queue: Queue<UsbEvent, 64>,
     control_queue: Queue<SetupPacket, 8>,
     packet_buffer: Vec<Packet, 4>,
@@ -72,6 +94,7 @@ impl Moondancer {
             quirk_flags: 0,
             ep_in_max_packet_size: [0; smolusb::EP_MAX_ENDPOINTS],
             ep_out_max_packet_size: [0; smolusb::EP_MAX_ENDPOINTS],
+            ep_transfer_type: [TransferType::Bulk; smolusb::EP_MAX_ENDPOINTS],
             irq_queue: Queue::new(),
             control_queue: Queue::new(),
             packet_buffer: Vec::new(),
@@ -410,12 +433,19 @@ impl Moondancer {
                     endpoint.max_packet_size.get()
                 };
 
-            // configure endpoint max packet sizes
+            // configure endpoint max packet sizes and transfer type
+            let transfer_type = TransferType::from_u8(endpoint.transfer_type);
             if Direction::from(endpoint.address) == Direction::HostToDevice {
                 self.ep_out_max_packet_size[endpoint_number as usize] = max_packet_size;
             } else {
                 self.ep_in_max_packet_size[endpoint_number as usize] = max_packet_size;
             }
+            self.ep_transfer_type[endpoint_number as usize] = transfer_type;
+
+            log::debug!(
+                "  transfer_type: {:?}",
+                transfer_type,
+            );
 
             // prime any OUT endpoints
             if Direction::from(endpoint.address) == Direction::HostToDevice {
@@ -865,6 +895,40 @@ impl Moondancer {
         let nak_status = self.usb0.ep_in.status().read().nak().bits();
         Ok(nak_status.to_le_bytes().into_iter())
     }
+
+    /// Write isochronous IN payload for one USB frame.
+    ///
+    /// Writes bytes to the ep_iso_in CSR FIFO and sets bytes_in_frame to arm
+    /// the next frame transmit.  Requires the ep_iso_in gateware peripheral to
+    /// be present in the bitstream (added in awtoau/cynthion#13).
+    ///
+    /// Until the bitstream is rebuilt this verb is a stub: it logs the call and
+    /// returns Ok so that the Python stack can exercise the GCP path.
+    pub fn iso_in_write(&mut self, arguments: &[u8]) -> GreatResult<impl Iterator<Item = u8>> {
+        struct Args<B: zerocopy::ByteSlice> {
+            endpoint_number: zerocopy::Ref<B, u8>,
+            payload: B,
+        }
+        let (endpoint_number, payload) =
+            zerocopy::Ref::new_unaligned_from_prefix(arguments)
+                .ok_or(GreatError::InvalidArgument)?;
+        let args = Args { endpoint_number, payload };
+
+        let ep_num: u8 = args.endpoint_number.read();
+        let payload_len = args.payload.len();
+
+        log::debug!(
+            "MD moondancer::iso_in_write(ep:{}, {} bytes) [stub — ep_iso_in CSR not yet mapped]",
+            ep_num,
+            payload_len,
+        );
+
+        // TODO awtoau/cynthion#13: once the ep_iso_in CSR peripheral is in the
+        // bitstream and moondancer-pac is regenerated, write bytes to the DATA
+        // register and then write payload_len to BYTES_IN_FRAME here.
+
+        Ok([].into_iter())
+    }
 }
 
 // - class information --------------------------------------------------------
@@ -882,7 +946,7 @@ pub static CLASS_DOCS: &str = "API for fine-grained control of the Target USB po
 ///
 /// Fields are `"\0"`  where C implementation has `""`
 /// Fields are `"*\0"` where C implementation has `NULL`
-pub static VERBS: [Verb; 19] = [
+pub static VERBS: [Verb; 20] = [
     // - device connection --
     Verb {
         id: 0x00,
@@ -1028,6 +1092,16 @@ pub static VERBS: [Verb; 19] = [
         doc: "\0", //"Enable OUT endpoints to resume receiving packets.\0",
         in_signature: "\0",
         in_param_names: "*\0",
+        out_signature: "\0",
+        out_param_names: "*\0",
+    },
+    // - isochronous --
+    Verb {
+        id: 0x10,
+        name: "iso_in_write\0",
+        doc: "\0", //"Write one USB frame's payload to the isochronous IN endpoint FIFO.\0",
+        in_signature: "<B*X\0",
+        in_param_names: "endpoint_number, payload\0",
         out_signature: "\0",
         out_param_names: "*\0",
     },
@@ -1177,6 +1251,12 @@ impl GreatDispatch for Moondancer {
             0x0f => {
                 // moondancer::ep_out_interface_enable
                 let iter = self.ep_out_interface_enable(arguments)?;
+                let response = iter_to_response(iter, response_buffer);
+                Ok(response)
+            }
+            0x10 => {
+                // moondancer::iso_in_write
+                let iter = self.iso_in_write(arguments)?;
                 let response = iter_to_response(iter, response_buffer);
                 Ok(response)
             }
