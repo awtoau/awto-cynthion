@@ -4,6 +4,7 @@
 
 // - modules ------------------------------------------------------------------
 
+pub mod canary;
 pub mod debug;
 pub mod error;
 pub mod event;
