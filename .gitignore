@@ -1,3 +1,6 @@
+# workspace temp files (logs, intermediate builds, scratch)
+tmp/
+
 # Python
 __pycache__/
 **/*.py[cod]
