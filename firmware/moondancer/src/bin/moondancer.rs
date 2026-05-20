@@ -20,6 +20,8 @@ use moondancer::{hal, pac, util};
 
 use pac::csr::interrupt;
 
+use core::sync::atomic::{AtomicU16, Ordering};
+
 // - configuration ------------------------------------------------------------
 
 const DEVICE_SPEED: Speed = Speed::High;
@@ -27,21 +29,17 @@ const DEVICE_SPEED: Speed = Speed::High;
 // - MachineExternal interrupt handler ----------------------------------------
 
 static EVENT_QUEUE: Queue<InterruptEvent, 64> = Queue::new();
+static EVENT_DROPS: AtomicU16 = AtomicU16::new(0);
 
 #[inline(always)]
 fn dispatch_event(event: InterruptEvent) {
     match EVENT_QUEUE.enqueue(event) {
         Ok(()) => (),
-        Err(_) => {
-            error!("MachineExternal - event queue overflow");
-            while let Some(interrupt_event) = EVENT_QUEUE.dequeue() {
-                error!("{:?}", interrupt_event);
-            }
-            loop {
-                unsafe {
-                    riscv::asm::nop();
-                }
-            }
+        Err(dropped) => {
+            // Queue full: drop the event and continue. Spinning here would
+            // permanently hang the firmware — overflow is recoverable (#16).
+            let n = EVENT_DROPS.fetch_add(1, Ordering::Relaxed);
+            error!("event queue overflow #{}: dropped {:?}", n, dropped);
         }
     }
 }
