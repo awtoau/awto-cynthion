@@ -143,12 +143,9 @@ impl Moondancer {
                 match self.control_queue.enqueue(setup_packet) {
                     Ok(()) => (),
                     Err(_) => {
-                        error!("Moondancer - control queue overflow");
-                        loop {
-                            unsafe {
-                                riscv::asm::nop();
-                            }
-                        }
+                        // Drop the setup packet and continue — spinning here permanently
+                        // deadlocks the firmware in interrupt context (#26).
+                        error!("control queue overflow: dropped setup packet on ep{}", endpoint_number);
                     }
                 }
                 UsbEvent::ReceiveControl(endpoint_number)
@@ -416,6 +413,15 @@ impl Moondancer {
                 continue;
             }
 
+            // reject out-of-range endpoint numbers (#25)
+            if endpoint_number as usize >= smolusb::EP_MAX_ENDPOINTS {
+                error!(
+                    "  endpoint number {} >= EP_MAX_ENDPOINTS ({}), skipping",
+                    endpoint_number, smolusb::EP_MAX_ENDPOINTS
+                );
+                continue;
+            }
+
             // Clamp max_packet_size to EP_MAX_PACKET_SIZE. Devices operating at
             // SuperSpeed advertise larger values (e.g. 1024 for bulk) but fall
             // back to HS when connected to Cynthion, where 512 is the HS maximum.
@@ -668,6 +674,11 @@ impl Moondancer {
         let blocking = args.blocking.read() != 0;
         let payload_length = args.payload.len();
         let iter = args.payload.iter();
+
+        if endpoint_number as usize >= smolusb::EP_MAX_ENDPOINTS {
+            error!("moondancer::write_endpoint: endpoint {} out of range", endpoint_number);
+            return Err(GreatError::InvalidArgument);
+        }
         let max_packet_size = self.ep_in_max_packet_size[endpoint_number as usize] as usize;
 
         let bytes_written = self.usb0.write_with_packet_size(
@@ -790,7 +801,7 @@ impl Moondancer {
         if blocking
             && self
                 .usb0
-                .ep_in_busy(endpoint_number, "moondancer::write_control_endpoint()")
+                .ep_in_busy(endpoint_number, "moondancer::write_endpoint()")
         {
             log::error!(
                 "moondancer::write_endpoint timed out after {} bytes during write of {} bytes",
