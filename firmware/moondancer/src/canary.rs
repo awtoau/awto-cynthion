@@ -26,6 +26,19 @@ pub unsafe fn is_intact() -> bool {
     core::ptr::read_volatile(addr) == CANARY_VALUE
 }
 
+/// Read the raw canary word (for diagnostics / selftest reporting).
+pub unsafe fn read_raw() -> u32 {
+    let addr = core::ptr::addr_of!(_sheap) as *const u32;
+    core::ptr::read_volatile(addr)
+}
+
+/// Overwrite the canary with zero — for fault-injection testing only.
+/// The panic fires at the next MachineExternal interrupt.
+pub unsafe fn corrupt() {
+    let addr = core::ptr::addr_of!(_sheap) as *mut u32;
+    core::ptr::write_volatile(addr, 0);
+}
+
 /// Bytes of stack consumed from the top: distance from current SP down
 /// to `_stack_start`. Read at interrupt entry — reflects interrupt-path depth.
 pub fn stack_used_bytes() -> u32 {
