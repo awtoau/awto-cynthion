@@ -4,8 +4,15 @@ check:
 fmt:
 	cargo fmt -- --emit files
 
+MOONDANCER_ELF = target/riscv32imac-unknown-none-elf/release/moondancer
+MOONDANCER_BIN = ../cynthion/python/assets/moondancer.bin
+
 build:
 	RUSTFLAGS="-C link-arg=-Tmemory.x -C link-arg=-Tlink.x" cargo build --release --target riscv32imac-unknown-none-elf
+
+bin: build
+	llvm-objcopy -O binary $(MOONDANCER_ELF) $(MOONDANCER_BIN)
+	@echo "Written: $(MOONDANCER_BIN)"
 
 
 ALL_GROUPS=-Wclippy::correctness \
