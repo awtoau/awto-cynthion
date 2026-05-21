@@ -1,5 +1,19 @@
 # Hardware
 
+```
+  HOST PC
+  ├─ CONTROL USB ──(1d50:615c)──► Apollo ARM MCU ──UART(R14/T14)──► ECP5 FPGA
+  │                                     │   │                              │
+  │                                  int│   └──JTAG──► ECP5 fabric         │
+  │                               (T6)  │                    │             │
+  │                                     └──────────── VexRiscv soft core ◄─┘
+  │
+  ├─ TARGET-A USB ─(1d50:615b)──► ECP5 FPGA ── moondancer gateware (facedancer mode)
+  │                                                  subclass 0x20
+  └─ TARGET-C USB ──────────────► UTi261M thermal camera (0bda:5830, UVC)
+                                  (proxied by facedancer → TARGET-A → host)
+```
+
 **Cynthion** — Great Scott Gadgets USB test instrument
 - USB VID:PID: 1d50:615b (all gateware modes: analyzer, facedancer)
 - Apollo bootloader: 1d50:60e6 (shown when no gateware is loaded)
