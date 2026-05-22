@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 -->
 
+## [0.2.5] - 2026-05-22
+### Added
+* Gateware resources for chirp pins on earlier Cynthion revisions.
+### Fixed
+* Facedancer bitstream configuration fails on some hosts.
+### Changed
+* HIL CI Update.
+
+
 ## [0.2.4] - 2025-09-10
 ### Added
 * Analyzer: Speed detection.
@@ -150,7 +159,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release
 
 
-[Unreleased]: https://github.com/greatscottgadgets/cynthion/compare/0.2.4...HEAD
+[Unreleased]: https://github.com/greatscottgadgets/cynthion/compare/0.2.5...HEAD
+[0.2.5]: https://github.com/greatscottgadgets/cynthion/compare/0.2.4...0.2.5
 [0.2.4]: https://github.com/greatscottgadgets/cynthion/compare/0.2.3...0.2.4
 [0.2.3]: https://github.com/greatscottgadgets/cynthion/compare/0.2.2...0.2.3
 [0.2.2]: https://github.com/greatscottgadgets/cynthion/compare/0.2.0...0.2.2
