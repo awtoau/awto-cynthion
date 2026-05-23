@@ -22,7 +22,10 @@ class Peripheral(wiring.Component):
             enable : Set this bit to '1' to start ApolloAdvertiser and disconnect the
                      Cynthion USB control port from Apollo.
         """
-        enable : csr.Field(csr.action.W, unsigned(1))
+        def __init__(self):
+            super().__init__({
+                "enable": csr.Field(csr.action.W, unsigned(1)),
+            })
 
 
     def __init__(self, pad=None, clk_freq_hz=None):

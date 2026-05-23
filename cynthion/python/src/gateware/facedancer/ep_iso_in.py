@@ -48,21 +48,33 @@ class Peripheral(wiring.Component):
 
     class BytesInFrame(csr.Register, access="w"):
         """Write the number of payload bytes for the next frame before SOF."""
-        count : csr.Field(csr.action.W, unsigned(11))  # 0..1023
+        def __init__(self):
+            super().__init__({
+                "count": csr.Field(csr.action.W, unsigned(11)),
+            })
 
     class Status(csr.Register, access="r"):
         """frame_pending: SOF arrived, firmware should refill FIFO and re-arm.
         overflow: DATA was written while FIFO was full; bytes were dropped."""
-        frame_pending : csr.Field(csr.action.R, unsigned(1))
-        overflow      : csr.Field(csr.action.R, unsigned(1))
+        def __init__(self):
+            super().__init__({
+                "frame_pending": csr.Field(csr.action.R, unsigned(1)),
+                "overflow":      csr.Field(csr.action.R, unsigned(1)),
+            })
 
     class Reset(csr.Register, access="w"):
         """Write 1 to clear the payload FIFO and reset frame state."""
-        fifo : csr.Field(csr.action.W, unsigned(1))
+        def __init__(self):
+            super().__init__({
+                "fifo": csr.Field(csr.action.W, unsigned(1)),
+            })
 
     class Data(csr.Register, access="w"):
         """Payload byte FIFO.  Write one byte per access."""
-        byte : csr.Field(csr.action.W, unsigned(8))
+        def __init__(self):
+            super().__init__({
+                "byte": csr.Field(csr.action.W, unsigned(8)),
+            })
 
     def __init__(self, endpoint_number, max_packet_size=1024, fifo_depth=2048):
         self._endpoint_number = endpoint_number

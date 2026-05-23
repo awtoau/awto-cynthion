@@ -28,8 +28,11 @@ class Peripheral(wiring.Component):
             major : Contains the Cynthion hardware major revision number.
             minor : Contains the Cynthion hardware minor revision number.
         """
-        major : csr.Field(csr.action.R, unsigned(8))
-        minor : csr.Field(csr.action.R, unsigned(8))
+        def __init__(self):
+            super().__init__({
+                "major": csr.Field(csr.action.R, unsigned(8)),
+                "minor": csr.Field(csr.action.R, unsigned(8)),
+            })
 
     def __init__(self):
         # registers
