@@ -299,7 +299,7 @@ class Soc(Component):
         usb0_device.add_endpoint(self.usb0_ep_out)
         usb0_device.add_endpoint(self.usb0_ep_iso_in)
         m.d.comb += self.usb0.attach(usb0_device)
-        m.submodules += [ulpi0_provider, self.usb0, usb0_device, self.usb0_ep_iso_in]
+        m.submodules += [ulpi0_provider, self.usb0, usb0_device]
 
         # usb1 - aux_phy
         ulpi1_provider = provider.ULPIProvider(["aux_phy", "host_phy"])
