@@ -14,3 +14,9 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="1d50", ATTR{idProduct}=="615c", SYMLINK+="cyn
 
 SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="000a", SYMLINK+="cynthion-test-%k", TAG+="uaccess"
 SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="000e", SYMLINK+="cynthion-example-%k", TAG+="uaccess"
+
+# Apollo's SPI flash bridge (`apollo flash --fast`). The bridge gateware takes
+# over the shared USB port and enumerates as its own device, so it needs a rule
+# of its own -- without this the bridge is read-only to non-root users and
+# flash-fast fails with "Access denied (insufficient permissions)".
+SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="000f", SYMLINK+="cynthion-flashbridge-%k", TAG+="uaccess"
