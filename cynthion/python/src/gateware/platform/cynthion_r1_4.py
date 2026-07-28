@@ -90,7 +90,17 @@ class CynthionPlatformRev1D4(CynthionPlatform):
         ),
 
         # interrupt output to send signal to microcontroller
-        Resource("int", 0, Pins("T6", dir="o"), Attrs(IO_TYPE="LVCMOS33")),
+        # FPGA_ADV. Bidirectional: the sideband command protocol has the FPGA
+        # answering Apollo on this wire, so it must release the line when idle
+        # rather than driving it push-pull forever.
+        #
+        # PULLMODE=UP is required, not cosmetic. The ECP5 defaults to pull-DOWN
+        # on an unconfigured IO, while Apollo pulls PA09 UP -- opposing pulls
+        # leave the line at a mid-rail divider voltage when neither end drives,
+        # which a UART reads as a permanent break. Both ends must agree on
+        # idle-high.
+        Resource("int", 0, Pins("T6", dir="io"),
+                 Attrs(IO_TYPE="LVCMOS33", PULLMODE="UP")),
 
         # USER button
         Resource("button_user", 0, PinsN("M14", dir="i"), Attrs(IO_TYPE="LVCMOS33", PULLMODE="NONE")),
