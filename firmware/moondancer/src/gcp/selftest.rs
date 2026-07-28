@@ -118,6 +118,7 @@ pub fn trigger_panic<'a>(
 /// Unbounded recursion to overflow the stack. Each frame is at least 16 bytes
 /// (saved ra + s0 + locals). The volatile read prevents tail-call elimination.
 #[inline(never)]
+#[allow(unconditional_recursion)] // the point of this function is to overflow the stack
 fn recurse(depth: u32) -> u32 {
     let here = depth;
     let _ = unsafe { core::ptr::read_volatile(&here) };

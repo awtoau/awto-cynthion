@@ -909,8 +909,8 @@ impl Moondancer {
 
     /// Write isochronous IN payload for one USB frame.
     ///
-    /// Writes bytes to the ep_iso_in CSR FIFO and sets bytes_in_frame to arm
-    /// the next frame transmit.  Requires the ep_iso_in gateware peripheral to
+    /// Writes bytes to the `ep_iso_in` CSR FIFO and sets `bytes_in_frame` to arm
+    /// the next frame transmit.  Requires the `ep_iso_in` gateware peripheral to
     /// be present in the bitstream (added in awtoau/cynthion#13).
     ///
     /// Until the bitstream is rebuilt this verb is a stub: it logs the call and
