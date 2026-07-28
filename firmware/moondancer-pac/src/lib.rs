@@ -2,6 +2,11 @@
 
 #![no_std]
 #![allow(clippy::inline_always)]
+// src/generated/ is svd2rust output. Hand-fixing style lints there is
+// pointless: the next regeneration would undo it. Allow the two that its
+// register-access boilerplate trips at crate level instead.
+#![allow(clippy::doc_markdown)]
+#![allow(clippy::elidable_lifetime_names)]
 
 #[cfg(all(feature = "minerva", feature = "vexriscv"))]
 compile_error!(r#"Only one of the "minerva" or "vexriscv" features can be selected"#);

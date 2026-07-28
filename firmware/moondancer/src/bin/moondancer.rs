@@ -47,11 +47,12 @@ fn dispatch_event(event: InterruptEvent) {
 #[allow(non_snake_case)]
 #[no_mangle]
 extern "C" fn MachineExternal() {
-    if !unsafe { moondancer::canary::is_intact() } {
-        panic!("stack overflow: canary clobbered (used ~{} of {} bytes)",
-            moondancer::canary::stack_used_bytes(),
-            moondancer::canary::stack_total_bytes());
-    }
+    assert!(
+        unsafe { moondancer::canary::is_intact() },
+        "stack overflow: canary clobbered (used ~{} of {} bytes)",
+        moondancer::canary::stack_used_bytes(),
+        moondancer::canary::stack_total_bytes()
+    );
     let event = moondancer::util::get_usb_interrupt_event();
     dispatch_event(event);
 }
@@ -74,7 +75,7 @@ fn main() -> ! {
     match firmware.initialize() {
         Ok(()) => (),
         Err(e) => {
-            panic!("Firmware panicked during initialization: {}", e)
+            panic!("Firmware panicked during initialization: {e}")
         }
     }
 
