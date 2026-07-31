@@ -45,6 +45,18 @@ dependencies = [
     "amaranth~=0.5",
     "luna-usb~=0.2.2",
     "luna-soc @ git+https://github.com/awtoau/awto-luna-soc.git@main",
+
+    # From git, not PyPI: the PyPI `amaranth-soc` is a placeholder -- version "0",
+    # no modules.
+    #
+    # Declared explicitly because luna_soc/__init__.py appends its own VENDORED copy
+    # of amaranth_soc to sys.path only when `import amaranth_soc` fails. Without this
+    # line the import fails, the vendor path is added, and every `from amaranth_soc
+    # import ...` in the workspace silently resolves to a fork reporting version
+    # "unknown" -- four commits behind upstream, including a py3.14 annotation fix that
+    # had to be hand-backported into it. The failure is silent: nothing errors, the
+    # wrong copy is simply used.
+    "amaranth-soc @ git+https://github.com/amaranth-lang/amaranth-soc.git@main",
 ]
 
 [project.scripts]
